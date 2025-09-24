@@ -65,8 +65,10 @@ const App: React.FC = () => {
                     </div>
                 </div>
             </main>
-             <footer className="text-center p-6 text-gray-500 text-sm mt-8">
-                <p>Built with React, TypeScript, and Tailwind CSS. All processing is done in your browser.</p>
+            <footer className="text-center p-6 text-gray-500 text-sm mt-8">
+                <p>
+                    Made with ❤️ by <a href="https://codewitheugene.top/" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 underline">Eugenius</a>.
+                </p>
             </footer>
         </div>
     );

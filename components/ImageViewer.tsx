@@ -31,13 +31,20 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ imageSrc, onHoverColor
 
             const containerWidth = container.offsetWidth;
             const aspectRatio = image.width / image.height;
-            const canvasWidth = containerWidth;
-            const canvasHeight = containerWidth / aspectRatio;
+            const cssWidth = containerWidth;
+            const cssHeight = containerWidth / aspectRatio;
 
-            canvas.width = canvasWidth;
-            canvas.height = canvasHeight;
+            // Handle HiDPI: set backing store size scaled by devicePixelRatio
+            const dpr = window.devicePixelRatio || 1;
+            canvas.style.width = `${cssWidth}px`;
+            canvas.style.height = `${cssHeight}px`;
+            canvas.width = Math.round(cssWidth * dpr);
+            canvas.height = Math.round(cssHeight * dpr);
 
-            context.drawImage(image, 0, 0, canvasWidth, canvasHeight);
+            // Scale drawing context so 1 unit = 1 CSS pixel
+            context.setTransform(dpr, 0, 0, dpr, 0, 0);
+            context.imageSmoothingEnabled = false;
+            context.drawImage(image, 0, 0, cssWidth, cssHeight);
         };
     }, [imageSrc]);
 
@@ -47,14 +54,26 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ imageSrc, onHoverColor
         if (!canvas || !context) return;
 
         const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        const cssX = e.clientX - rect.left;
+        const cssY = e.clientY - rect.top;
 
-        const pixel = context.getImageData(x, y, 1, 1).data;
+        // Clamp to canvas CSS size
+        const cssWidth = rect.width;
+        const cssHeight = rect.height;
+        const clampedCssX = Math.min(Math.max(cssX, 0), cssWidth - 1);
+        const clampedCssY = Math.min(Math.max(cssY, 0), cssHeight - 1);
+
+        // Map CSS pixels to backing store pixels
+        const dpr = window.devicePixelRatio || 1;
+        const pixelX = Math.floor(clampedCssX * dpr);
+        const pixelY = Math.floor(clampedCssY * dpr);
+
+        // Read exact pixel
+        const pixel = context.getImageData(pixelX, pixelY, 1, 1).data;
         const rgb: RGB = { r: pixel[0], g: pixel[1], b: pixel[2] };
 
         onHoverColor(rgb);
-        setCursorPos({ x, y });
+        setCursorPos({ x: clampedCssX, y: clampedCssY });
 
         if (e.type === 'click') {
             onSelectColor(rgb);
@@ -81,7 +100,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ imageSrc, onHoverColor
                         height: MAGNIFIER_SIZE,
                         backgroundImage: `url(${canvasRef.current?.toDataURL()})`,
                         backgroundPosition: `${-cursorPos.x * ZOOM_LEVEL + MAGNIFIER_SIZE / 2}px ${-cursorPos.y * ZOOM_LEVEL + MAGNIFIER_SIZE / 2}px`,
-                        backgroundSize: `${(canvasRef.current?.width || 0) * ZOOM_LEVEL}px ${(canvasRef.current?.height || 0) * ZOOM_LEVEL}px`,
+                        backgroundSize: `${(canvasRef.current?.width || 0) / (window.devicePixelRatio || 1) * ZOOM_LEVEL}px ${(canvasRef.current?.height || 0) / (window.devicePixelRatio || 1) * ZOOM_LEVEL}px`,
                         imageRendering: 'pixelated',
                     }}
                 >
