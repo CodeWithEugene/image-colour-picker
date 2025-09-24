@@ -1,0 +1,5 @@
+{
+  "name": "Chroma Vision: The Ultimate Color Picker",
+  "description": "An advanced, client-side image color picker. Upload, paste, or link an image to instantly analyze colors, generate palettes, check accessibility contrast, and simulate color blindness in a sleek, futuristic interface.",
+  "requestFramePermissions": []
+}
